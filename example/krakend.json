@@ -1,0 +1,51 @@
+{
+    "version": 1,
+    "name": "My lovely gateway",
+    "port": 8080,
+    "cache_ttl": 3600,
+    "timeout": "3s",
+    "endpoints": [
+        {
+            "endpoint": "/github/{user}",
+            "backend": [
+                {
+                    "host": [
+                        "github"
+                    ],
+                    "url_pattern": "/",
+                    "whitelist": [
+                        "authorizations_url",
+                        "code_search_url"
+                    ],
+                    "disable_host_sanitize": true
+                }
+            ]
+        },
+        {
+            "endpoint": "/combination/{id}",
+            "backend": [
+                {
+                    "host": [
+                        "jsonplaceholder.typicode"
+                    ],
+                    "url_pattern": "/posts?userId={id}",
+                    "is_collection": true,
+                    "mapping": {
+                        "collection": "posts"
+                    },
+                    "disable_host_sanitize": true
+                },
+                {
+                    "host": [
+                        "jsonplaceholder.typicode"
+                    ],
+                    "url_pattern": "/users/{id}",
+                    "mapping": {
+                        "email": "personal_email"
+                    },
+                    "disable_host_sanitize": true
+                }
+            ]
+        }
+    ]
+}
