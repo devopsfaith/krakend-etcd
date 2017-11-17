@@ -12,11 +12,15 @@ import (
 const Namespace = "github_com/devopsfaith/krakend-etcd"
 
 var (
-	ErrNoConfig   = fmt.Errorf("unable to create the etcd client: no config")
-	ErrBadConfig  = fmt.Errorf("unable to create the etcd client with the received config")
+	// ErrNoConfig is the error to be returned when there is no config with the etcd namespace
+	ErrNoConfig = fmt.Errorf("unable to create the etcd client: no config")
+	// ErrBadConfig is the error to be returned when the config is not well defined
+	ErrBadConfig = fmt.Errorf("unable to create the etcd client with the received config")
+	// ErrNoMachines is the error to be returned when the config has not defined one or more servers
 	ErrNoMachines = fmt.Errorf("unable to create the etcd client without a set of servers")
 )
 
+// New creates an etcd client with the config extracted from the extra config param
 func New(ctx context.Context, e config.ExtraConfig) (Client, error) {
 	v, ok := e[Namespace]
 	if !ok {
