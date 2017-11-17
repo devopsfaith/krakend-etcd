@@ -47,5 +47,15 @@
                 }
             ]
         }
-    ]
+    ],
+    "extra_config": {
+        "github_com/devopsfaith/krakend-etcd": {
+            "machines": [ "http://192.168.99.100:4001" ],
+            "options": {
+                "dial_timeout": "5s",
+                "dial_keepalive": "30s",
+                "header_timeout": "1s"
+            }
+        }
+    }
 }

@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -22,7 +21,6 @@ func main() {
 	logLevel := flag.String("l", "ERROR", "Logging level")
 	debug := flag.Bool("d", false, "Enable the debug")
 	configFile := flag.String("c", "/etc/krakend/configuration.json", "Path to the configuration filename")
-	etcdServer := flag.String("etcd", "http://192.168.99.100:4001", "Comma-separated list of etcd servers (with port and schema)")
 	flag.Parse()
 
 	parser := viper.New()
@@ -42,9 +40,9 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	etcdClient, err := etcd.NewClient(ctx, strings.Split(*etcdServer, ","), etcd.ClientOptions{})
+	etcdClient, err := etcd.New(ctx, serviceConfig.ExtraConfig)
 	if err != nil {
-		panic(err)
+		log.Fatal("ERROR:", err.Error())
 	}
 
 	routerFactory := krakendgin.NewFactory(krakendgin.Config{
