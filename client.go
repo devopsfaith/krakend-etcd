@@ -70,17 +70,16 @@ func NewClient(ctx context.Context, machines []string, options ClientOptions) (C
 		if err != nil {
 			return nil, err
 		}
-		caCertCt, err := ioutil.ReadFile(options.CACert)
-		if err != nil {
-			return nil, err
+		tlsCfg := &tls.Config{
+			Certificates: []tls.Certificate{tlsCert},
 		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCertCt)
+		if caCertCt, err := ioutil.ReadFile(options.CACert); err == nil {
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCertCt)
+			tlsCfg.RootCAs = caCertPool
+		}
 		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				Certificates: []tls.Certificate{tlsCert},
-				RootCAs:      caCertPool,
-			},
+			TLSClientConfig: tlsCfg,
 			Dial: func(network, address string) (net.Conn, error) {
 				return (&net.Dialer{
 					Timeout:   options.DialTimeout,

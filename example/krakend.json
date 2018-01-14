@@ -1,8 +1,8 @@
 {
-    "version": 1,
+    "version": 2,
     "name": "My lovely gateway",
     "port": 8080,
-    "cache_ttl": 3600,
+    "cache_ttl": "3600s",
     "timeout": "3s",
     "endpoints": [
         {
@@ -17,7 +17,8 @@
                         "authorizations_url",
                         "code_search_url"
                     ],
-                    "disable_host_sanitize": true
+                    "sd": "etcd",
+                    
                 }
             ]
         },
@@ -33,6 +34,7 @@
                     "mapping": {
                         "collection": "posts"
                     },
+                    "sd": "etcd",
                     "disable_host_sanitize": true
                 },
                 {
@@ -43,6 +45,7 @@
                     "mapping": {
                         "email": "personal_email"
                     },
+                    "sd": "etcd",
                     "disable_host_sanitize": true
                 }
             ]
