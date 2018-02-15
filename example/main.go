@@ -56,7 +56,7 @@ func main() {
 		},
 	})
 
-	routerFactory.New().Run(serviceConfig)
+	routerFactory.NewWithContext(ctx).Run(serviceConfig)
 
 	cancel()
 }
