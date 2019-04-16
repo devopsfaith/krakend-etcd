@@ -20,7 +20,7 @@ func main() {
 	port := flag.Int("p", 0, "Port of the service")
 	logLevel := flag.String("l", "ERROR", "Logging level")
 	debug := flag.Bool("d", false, "Enable the debug")
-	configFile := flag.String("c", "E:/megvii/project/go_learning/krakend-etcd/example/krakend.json", "Path to the configuration filename")
+	configFile := flag.String("c", "/etc/krakend/configuration.json", "Path to the configuration filename")
 	flag.Parse()
 
 	parser := config.NewParser()
