@@ -52,6 +52,8 @@ var (
 	ErrBadConfig = fmt.Errorf("unable to create the etcd client with the received config")
 	// ErrNoMachines is the error to be returned when the config has not defined one or more servers
 	ErrNoMachines = fmt.Errorf("unable to create the etcd client without a set of servers")
+	// ErrNilClient is the error to be nil client
+	ErrNilClient = fmt.Errorf("nil etcd client")
 )
 
 // New creates an etcd client with the config extracted from the extra config param
@@ -86,7 +88,7 @@ func parseVersion(cfg map[string]interface{}) (string, error) {
 		return "v2", nil
 	}
 	result := value.(string)
-	if result != "v2" || result != "v3" {
+	if result != "v2" && result != "v3" {
 		result = "v2"
 		log.Warnf("")
 	}

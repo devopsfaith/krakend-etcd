@@ -68,6 +68,10 @@ func NewClientV3(ctx context.Context, machines []string, options ClientOptions) 
 // GetEntries implements the etcd Client interface.
 func (c *clientv3) GetEntries(key string) ([]string, error) {
 
+	if c.client == nil {
+		return nil, ErrNilClient
+	}
+	
 	// set the timeout for this requisition
 	timeoutCtx, cancel := context.WithTimeout(c.ctx, c.timeout)
 	resp, err := c.client.Get(timeoutCtx, key, etcdv3.WithPrefix())
@@ -86,13 +90,17 @@ func (c *clientv3) GetEntries(key string) ([]string, error) {
 
 	entries := make([]string, resp.Count)
 	for i, ev := range resp.Kvs {
-		entries[i] = string(ev.Key[:])
+		entries[i] = string(ev.Value[:])
 	}
 	return entries, nil
 }
 
 // WatchPrefix implements the etcd Client interface.
 func (c *clientv3) WatchPrefix(prefix string, ch chan struct{}) {
+	
+	if c.client == nil {
+		return
+	}
 	watch := c.client.Watch(c.ctx, prefix, etcdv3.WithPrefix())
 	// watch := c.keysAPI.Watcher(prefix, &etcd.WatcherOptions{AfterIndex: 0, Recursive: true})
 	ch <- struct{}{} // make sure caller invokes GetEntries

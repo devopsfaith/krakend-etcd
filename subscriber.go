@@ -3,7 +3,7 @@ package etcd
 import (
 	"context"
 	"sync"
-
+	
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/sd"
 )
