@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	`github.com/devopsfaith/krakend/router`
+	"github.com/devopsfaith/krakend/router"
 	"github.com/khvysofq/krakend-etcd"
 	"log"
 	"os"
-	
+
 	"github.com/gin-gonic/gin"
-	
+
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/logging"
 	"github.com/devopsfaith/krakend/proxy"
@@ -22,8 +22,8 @@ func main() {
 	debug := flag.Bool("d", false, "Enable the debug")
 	configFile := flag.String("c", "E:/megvii/project/go_learning/krakend-etcd/example/krakend.json", "Path to the configuration filename")
 	flag.Parse()
-	
-	parser 			:= config.NewParser()
+
+	parser := config.NewParser()
 	serviceConfig, err := parser.Parse(*configFile)
 	if err != nil {
 		log.Fatal("ERROR:", err.Error())
@@ -54,7 +54,7 @@ func main() {
 			logger,
 			proxy.DefaultFactoryWithSubscriber(logger, etcd.SubscriberFactory(ctx, etcdClient)),
 		},
-		RunServer:      router.RunServer,
+		RunServer: router.RunServer,
 	})
 
 	routerFactory.NewWithContext(ctx).Run(serviceConfig)

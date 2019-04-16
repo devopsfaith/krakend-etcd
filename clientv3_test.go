@@ -2,8 +2,8 @@ package etcd
 
 import (
 	"context"
-	`testing`
-	`time`
+	"testing"
+	"time"
 )
 
 func TestNewClient_withDefaultsV3(t *testing.T) {
@@ -40,7 +40,7 @@ func TestOptionsV3(t *testing.T) {
 	if a != nil {
 		t.Fatalf("expected client to be nil on failure")
 	}
-	
+
 	_, err = NewClientV3(
 		context.Background(),
 		[]string{"http://irrelevant:12345"},
@@ -61,24 +61,24 @@ func TestOptionsV3(t *testing.T) {
 // ---------------------------------------------------------------------------------------------------------------------
 
 func newFakeClientV3(ctx context.Context) Client {
-	return &clientv3 {
-		client:			nil,
-		ctx:				ctx,
-		timeout:    3 * time.Second,
+	return &clientv3{
+		client:  nil,
+		ctx:     ctx,
+		timeout: 3 * time.Second,
 	}
 }
 
 func TestWatchPrefixV3(t *testing.T) {
-	
+
 	cv3 := newFakeClientV3(context.Background())
-	
-	ch  := make(chan struct{})
+
+	ch := make(chan struct{})
 	cv3.WatchPrefix("prefix", ch)
 }
 
 func TestGetEntriesV3(t *testing.T) {
 	cv3 := newFakeClientV3(context.Background())
-	
+
 	res, err := cv3.GetEntries("prefix")
 	if res != nil || err == nil {
 		t.Errorf("expected client error")

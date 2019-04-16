@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 type clientv3 struct {
 	client  *etcdv3.Client
 	ctx     context.Context
@@ -71,7 +70,7 @@ func (c *clientv3) GetEntries(key string) ([]string, error) {
 	if c.client == nil {
 		return nil, ErrNilClient
 	}
-	
+
 	// set the timeout for this requisition
 	timeoutCtx, cancel := context.WithTimeout(c.ctx, c.timeout)
 	resp, err := c.client.Get(timeoutCtx, key, etcdv3.WithPrefix())
@@ -97,7 +96,7 @@ func (c *clientv3) GetEntries(key string) ([]string, error) {
 
 // WatchPrefix implements the etcd Client interface.
 func (c *clientv3) WatchPrefix(prefix string, ch chan struct{}) {
-	
+
 	if c.client == nil {
 		return
 	}
