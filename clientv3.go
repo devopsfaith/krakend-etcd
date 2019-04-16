@@ -4,23 +4,23 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	etcdv3 "github.com/coreos/etcd/clientv3"
 	"io/ioutil"
-	"net"
-	"net/http"
-	
-	etcd "github.com/coreos/etcd/client"
+	"time"
 )
 
-type client struct {
-	keysAPI etcd.KeysAPI
+
+type clientv3 struct {
+	client  *etcdv3.Client
 	ctx     context.Context
+	timeout time.Duration
 }
 
 // NewClient returns Client with a connection to the named machines. It will
 // return an error if a connection to the cluster cannot be made. The parameter
 // machines needs to be a full URL with schemas. e.g. "http://localhost:2379"
 // will work, but "localhost:2379" will not.
-func NewClient(ctx context.Context, machines []string, options ClientOptions) (Client, error) {
+func NewClientV3(ctx context.Context, machines []string, options ClientOptions) (Client, error) {
 	if options.DialTimeout == 0 {
 		options.DialTimeout = defaultTTL
 	}
@@ -31,13 +31,13 @@ func NewClient(ctx context.Context, machines []string, options ClientOptions) (C
 		options.HeaderTimeoutPerRequest = defaultTTL
 	}
 
-	transport := etcd.DefaultTransport
+	var tlsCfg *tls.Config
 	if options.Cert != "" && options.Key != "" {
 		tlsCert, err := tls.LoadX509KeyPair(options.Cert, options.Key)
 		if err != nil {
 			return nil, err
 		}
-		tlsCfg := &tls.Config{
+		tlsCfg = &tls.Config{
 			Certificates: []tls.Certificate{tlsCert},
 		}
 		if caCertCt, err := ioutil.ReadFile(options.CACert); err == nil {
@@ -45,35 +45,34 @@ func NewClient(ctx context.Context, machines []string, options ClientOptions) (C
 			caCertPool.AppendCertsFromPEM(caCertCt)
 			tlsCfg.RootCAs = caCertPool
 		}
-		transport = &http.Transport{
-			TLSClientConfig: tlsCfg,
-			Dial: func(network, address string) (net.Conn, error) {
-				return (&net.Dialer{
-					Timeout:   options.DialTimeout,
-					KeepAlive: options.DialKeepAlive,
-				}).Dial(network, address)
-			},
-		}
 	}
 
-	ce, err := etcd.New(etcd.Config{
-		Endpoints:               machines,
-		Transport:               transport,
-		HeaderTimeoutPerRequest: options.HeaderTimeoutPerRequest,
+	ce, err := etcdv3.New(etcdv3.Config{
+		Endpoints:            machines,
+		DialTimeout:          options.DialTimeout,
+		DialKeepAliveTime:    options.DialKeepAlive,
+		DialKeepAliveTimeout: options.HeaderTimeoutPerRequest,
+		TLS:                  tlsCfg,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &client{
-		keysAPI: etcd.NewKeysAPI(ce),
+	return &clientv3{
+		client:  ce,
 		ctx:     ctx,
+		timeout: options.HeaderTimeoutPerRequest,
 	}, nil
 }
 
 // GetEntries implements the etcd Client interface.
-func (c *client) GetEntries(key string) ([]string, error) {
-	resp, err := c.keysAPI.Get(c.ctx, key, &etcd.GetOptions{Recursive: true})
+func (c *clientv3) GetEntries(key string) ([]string, error) {
+
+	// set the timeout for this requisition
+	timeoutCtx, cancel := context.WithTimeout(c.ctx, c.timeout)
+	resp, err := c.client.Get(timeoutCtx, key, etcdv3.WithPrefix())
+	cancel()
+
 	if err != nil {
 		return nil, err
 	}
@@ -81,25 +80,30 @@ func (c *client) GetEntries(key string) ([]string, error) {
 	// Special case. Note that it's possible that len(resp.Node.Nodes) == 0 and
 	// resp.Node.Value is also empty, in which case the key is empty and we
 	// should not return any entries.
-	if len(resp.Node.Nodes) == 0 && resp.Node.Value != "" {
-		return []string{resp.Node.Value}, nil
+	if len(resp.Kvs) == 0 || resp.Count != int64(len(resp.Kvs)) {
+		return nil, nil
 	}
 
-	entries := make([]string, len(resp.Node.Nodes))
-	for i, node := range resp.Node.Nodes {
-		entries[i] = node.Value
+	entries := make([]string, resp.Count)
+	for i, ev := range resp.Kvs {
+		entries[i] = string(ev.Key[:])
 	}
 	return entries, nil
 }
 
 // WatchPrefix implements the etcd Client interface.
-func (c *client) WatchPrefix(prefix string, ch chan struct{}) {
-	watch := c.keysAPI.Watcher(prefix, &etcd.WatcherOptions{AfterIndex: 0, Recursive: true})
+func (c *clientv3) WatchPrefix(prefix string, ch chan struct{}) {
+	watch := c.client.Watch(c.ctx, prefix, etcdv3.WithPrefix())
+	// watch := c.keysAPI.Watcher(prefix, &etcd.WatcherOptions{AfterIndex: 0, Recursive: true})
 	ch <- struct{}{} // make sure caller invokes GetEntries
 	for {
-		if _, err := watch.Next(c.ctx); err != nil {
-			return
+		select {
+		case _, ok := <-watch:
+			if ok {
+				ch <- struct{}{}
+			} else {
+				// Do nothing
+			}
 		}
-		ch <- struct{}{}
 	}
 }

@@ -3,10 +3,44 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/common/log"
 	"time"
 
 	"github.com/devopsfaith/krakend/config"
 )
+
+// Code taken from https://github.com/go-kit/kit/blob/master/sd/etcd/client.go
+
+const defaultTTL = 3 * time.Second
+
+// Client is a wrapper around the etcd client.
+type Client interface {
+	// GetEntries queries the given prefix in etcd and returns a slice
+	// containing the values of all keys found, recursively, underneath that
+	// prefix.
+	GetEntries(prefix string) ([]string, error)
+
+	// WatchPrefix watches the given prefix in etcd for changes. When a change
+	// is detected, it will signal on the passed channel. Clients are expected
+	// to call GetEntries to update themselves with the latest set of complete
+	// values. WatchPrefix will always send an initial sentinel value on the
+	// channel after establishing the watch, to ensure that clients always
+	// receive the latest set of values. WatchPrefix will block until the
+	// context passed to the NewClient constructor is terminated.
+	WatchPrefix(prefix string, ch chan struct{})
+}
+
+// ClientOptions defines options for the etcd client. All values are optional.
+// If any duration is not specified, a default of 3 seconds will be used.
+type ClientOptions struct {
+	Cert                    string
+	Key                     string
+	CACert                  string
+	DialTimeout             time.Duration
+	DialKeepAlive           time.Duration
+	DialKeepAliveTimeout    time.Duration
+	HeaderTimeoutPerRequest time.Duration
+}
 
 // Namespace is the key to use to store and access the custom config data
 const Namespace = "github_com/devopsfaith/krakend-etcd"
@@ -34,8 +68,29 @@ func New(ctx context.Context, e config.ExtraConfig) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	version, err := parseVersion(tmp)
+	if err != nil {
+		return nil, err
+	}
 
-	return NewClient(ctx, machines, parseOptions(tmp))
+	if version == "v2" {
+		return NewClient(ctx, machines, parseOptions(tmp))
+	} else {
+		return NewClientV3(ctx, machines, parseOptions(tmp))
+	}
+}
+
+func parseVersion(cfg map[string]interface{}) (string, error) {
+	value, ok := cfg["client_version"]
+	if !ok {
+		return "v2", nil
+	}
+	result := value.(string)
+	if result != "v2" || result != "v3" {
+		result = "v2"
+		log.Warnf("")
+	}
+	return result, nil
 }
 
 func parseMachines(cfg map[string]interface{}) ([]string, error) {
