@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	etcdv3 "github.com/coreos/etcd/clientv3"
 	"io/ioutil"
 	"time"
+
+	etcdv3 "github.com/coreos/etcd/clientv3"
 )
 
 type clientv3 struct {
@@ -103,14 +104,7 @@ func (c *clientv3) WatchPrefix(prefix string, ch chan struct{}) {
 	watch := c.client.Watch(c.ctx, prefix, etcdv3.WithPrefix())
 	// watch := c.keysAPI.Watcher(prefix, &etcd.WatcherOptions{AfterIndex: 0, Recursive: true})
 	ch <- struct{}{} // make sure caller invokes GetEntries
-	for {
-		select {
-		case _, ok := <-watch:
-			if ok {
-				ch <- struct{}{}
-			} else {
-				// Do nothing
-			}
-		}
+	for _ := range watch {
+		ch <- struct{}{}
 	}
 }

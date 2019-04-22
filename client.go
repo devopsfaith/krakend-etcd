@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	
+
 	etcd "github.com/coreos/etcd/client"
 )
 

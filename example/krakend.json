@@ -12,7 +12,7 @@
             "backend": [
                 {
                     "host": [
-                        "github.com"
+                        "github"
                     ],
                     "url_pattern": "/",
                     "disable_host_sanitize": true,

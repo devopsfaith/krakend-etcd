@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"github.com/prometheus/common/log"
 	"time"
 
 	"github.com/devopsfaith/krakend/config"
@@ -75,11 +74,10 @@ func New(ctx context.Context, e config.ExtraConfig) (Client, error) {
 		return nil, err
 	}
 
-	if version == "v2" {
-		return NewClient(ctx, machines, parseOptions(tmp))
-	} else {
+	if version == "v3" {
 		return NewClientV3(ctx, machines, parseOptions(tmp))
 	}
+	return NewClient(ctx, machines, parseOptions(tmp))
 }
 
 func parseVersion(cfg map[string]interface{}) (string, error) {
@@ -90,7 +88,6 @@ func parseVersion(cfg map[string]interface{}) (string, error) {
 	result := value.(string)
 	if result != "v2" && result != "v3" {
 		result = "v2"
-		log.Warnf("")
 	}
 	return result, nil
 }

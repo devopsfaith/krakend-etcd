@@ -3,17 +3,16 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/devopsfaith/krakend/router"
-	"github.com/khvysofq/krakend-etcd"
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
-
+	"github.com/devopsfaith/krakend-etcd"
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/logging"
 	"github.com/devopsfaith/krakend/proxy"
+	"github.com/devopsfaith/krakend/router"
 	krakendgin "github.com/devopsfaith/krakend/router/gin"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
