@@ -8,6 +8,39 @@ import (
 	"github.com/devopsfaith/krakend/config"
 )
 
+// Code taken from https://github.com/go-kit/kit/blob/master/sd/etcd/client.go
+
+const defaultTTL = 3 * time.Second
+
+// Client is a wrapper around the etcd client.
+type Client interface {
+	// GetEntries queries the given prefix in etcd and returns a slice
+	// containing the values of all keys found, recursively, underneath that
+	// prefix.
+	GetEntries(prefix string) ([]string, error)
+
+	// WatchPrefix watches the given prefix in etcd for changes. When a change
+	// is detected, it will signal on the passed channel. Clients are expected
+	// to call GetEntries to update themselves with the latest set of complete
+	// values. WatchPrefix will always send an initial sentinel value on the
+	// channel after establishing the watch, to ensure that clients always
+	// receive the latest set of values. WatchPrefix will block until the
+	// context passed to the NewClient constructor is terminated.
+	WatchPrefix(prefix string, ch chan struct{})
+}
+
+// ClientOptions defines options for the etcd client. All values are optional.
+// If any duration is not specified, a default of 3 seconds will be used.
+type ClientOptions struct {
+	Cert                    string
+	Key                     string
+	CACert                  string
+	DialTimeout             time.Duration
+	DialKeepAlive           time.Duration
+	DialKeepAliveTimeout    time.Duration
+	HeaderTimeoutPerRequest time.Duration
+}
+
 // Namespace is the key to use to store and access the custom config data
 const Namespace = "github_com/devopsfaith/krakend-etcd"
 
@@ -18,6 +51,8 @@ var (
 	ErrBadConfig = fmt.Errorf("unable to create the etcd client with the received config")
 	// ErrNoMachines is the error to be returned when the config has not defined one or more servers
 	ErrNoMachines = fmt.Errorf("unable to create the etcd client without a set of servers")
+	// ErrNilClient is the error to be nil client
+	ErrNilClient = fmt.Errorf("nil etcd client")
 )
 
 // New creates an etcd client with the config extracted from the extra config param
@@ -34,8 +69,27 @@ func New(ctx context.Context, e config.ExtraConfig) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	version, err := parseVersion(tmp)
+	if err != nil {
+		return nil, err
+	}
 
+	if version == "v3" {
+		return NewClientV3(ctx, machines, parseOptions(tmp))
+	}
 	return NewClient(ctx, machines, parseOptions(tmp))
+}
+
+func parseVersion(cfg map[string]interface{}) (string, error) {
+	value, ok := cfg["client_version"]
+	if !ok {
+		return "v2", nil
+	}
+	result, ok := value.(string)
+	if !ok || (result != "v2" && result != "v3") {
+		result = "v2"
+	}
+	return result, nil
 }
 
 func parseMachines(cfg map[string]interface{}) ([]string, error) {

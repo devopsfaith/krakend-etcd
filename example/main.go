@@ -6,14 +6,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/devopsfaith/krakend-etcd"
-	"github.com/devopsfaith/krakend-viper"
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/logging"
 	"github.com/devopsfaith/krakend/proxy"
+	"github.com/devopsfaith/krakend/router"
 	krakendgin "github.com/devopsfaith/krakend/router/gin"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func main() {
 	configFile := flag.String("c", "/etc/krakend/configuration.json", "Path to the configuration filename")
 	flag.Parse()
 
-	parser := viper.New()
+	parser := config.NewParser()
 	serviceConfig, err := parser.Parse(*configFile)
 	if err != nil {
 		log.Fatal("ERROR:", err.Error())
@@ -54,6 +53,7 @@ func main() {
 			logger,
 			proxy.DefaultFactoryWithSubscriber(logger, etcd.SubscriberFactory(ctx, etcdClient)),
 		},
+		RunServer: router.RunServer,
 	})
 
 	routerFactory.NewWithContext(ctx).Run(serviceConfig)

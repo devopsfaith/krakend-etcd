@@ -7,21 +7,45 @@
     "endpoints": [
         {
             "endpoint": "/github/{user}",
+			"method": "GET",
+			"output_encoding": "no-op",
             "backend": [
                 {
                     "host": [
                         "github"
                     ],
                     "url_pattern": "/",
+                    "disable_host_sanitize": true,
                     "whitelist": [
                         "authorizations_url",
                         "code_search_url"
                     ],
-                    "sd": "etcd",
-                    
+                    "sd": "etcd"
                 }
             ]
-        },
+        },    
+		{
+		  "endpoint": "/",
+		  "method": "GET",
+		  "extra_config": {},
+		  "output_encoding": "no-op",
+		  "concurrent_calls": 1,
+		  "querystring_params":[
+			"*"
+		  ],
+		  "backend": [
+			{
+			  "url_pattern": "/",
+			  "encoding": "no-op",
+			  "extra_config": {},
+			  "sd": "etcd",
+			  "host": [
+				"github.com"
+			  ],
+			  "disable_host_sanitize": true
+			}
+		  ]
+		},
         {
             "endpoint": "/combination/{id}",
             "backend": [
@@ -30,6 +54,7 @@
                         "jsonplaceholder.typicode"
                     ],
                     "url_pattern": "/posts?userId={id}",
+					"encoding": "no-op",
                     "is_collection": true,
                     "mapping": {
                         "collection": "posts"
@@ -53,7 +78,8 @@
     ],
     "extra_config": {
         "github_com/devopsfaith/krakend-etcd": {
-            "machines": [ "http://192.168.99.100:4001" ],
+            "machines": [ "http://192.168.110.111:2379" ],
+			"client_version": "v3",
             "options": {
                 "dial_timeout": "5s",
                 "dial_keepalive": "30s",
