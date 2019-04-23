@@ -102,7 +102,6 @@ func (c *clientv3) WatchPrefix(prefix string, ch chan struct{}) {
 		return
 	}
 	watch := c.client.Watch(c.ctx, prefix, etcdv3.WithPrefix())
-	// watch := c.keysAPI.Watcher(prefix, &etcd.WatcherOptions{AfterIndex: 0, Recursive: true})
 	ch <- struct{}{} // make sure caller invokes GetEntries
 	for _ := range watch {
 		ch <- struct{}{}

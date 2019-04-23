@@ -85,8 +85,8 @@ func parseVersion(cfg map[string]interface{}) (string, error) {
 	if !ok {
 		return "v2", nil
 	}
-	result := value.(string)
-	if result != "v2" && result != "v3" {
+	result, ok := value.(string)
+	if !ok || (result != "v2" && result != "v3") {
 		result = "v2"
 	}
 	return result, nil
