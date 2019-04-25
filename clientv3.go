@@ -103,7 +103,7 @@ func (c *clientv3) WatchPrefix(prefix string, ch chan struct{}) {
 	}
 	watch := c.client.Watch(c.ctx, prefix, etcdv3.WithPrefix())
 	ch <- struct{}{} // make sure caller invokes GetEntries
-	for _ := range watch {
+	for _ = range watch {
 		ch <- struct{}{}
 	}
 }
